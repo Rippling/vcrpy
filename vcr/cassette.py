@@ -11,10 +11,27 @@ from .patch import CassettePatcherBuilder
 from .persist import load_cassette, save_cassette
 from .serializers import yamlserializer
 from .util import partition_dict
-
+from six.moves.urllib.parse import urlparse, parse_qsl, unquote_plus
 
 log = logging.getLogger(__name__)
 
+class Url(object):
+    '''A url object that can be compared with other url orbjects
+    without regard to the vagaries of encoding, escaping, and ordering
+    of parameters in query strings.'''
+
+    def __init__(self, url):
+        parts = urlparse(url)
+        _query = frozenset(parse_qsl(parts.query))
+        _path = unquote_plus(parts.path)
+        parts = parts._replace(query=_query, path=_path)
+        self.parts = parts
+
+    def __eq__(self, other):
+        return self.parts == other.parts
+
+    def __hash__(self):
+        return hash(self.parts)
 
 class CassetteContextDecorator(object):
     """Context manager/decorator that handles installing the cassette and
@@ -231,9 +248,11 @@ class Cassette(object):
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        return request and request in self and \
-            self.record_mode != 'all' and \
-            self.rewound
+        before_url = Url(request.url)
+        check_in_urls = [Url(req.url) for req in self.requests]
+        return request and before_url in check_in_urls and \
+               self.record_mode != 'all' and \
+               self.rewound
 
     def play_response(self, request):
         """
