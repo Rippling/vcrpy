@@ -20,15 +20,17 @@ class Url(object):
     without regard to the vagaries of encoding, escaping, and ordering
     of parameters in query strings.'''
 
-    def __init__(self, url):
+    def __init__(self, request):
+        url = request.uri
         parts = urlparse(url)
         _query = frozenset(parse_qsl(parts.query))
         _path = unquote_plus(parts.path)
         parts = parts._replace(query=_query, path=_path)
         self.parts = parts
+        self.authorization = request.headers['Authorization'] if 'Authorization' in request.headers else None
 
     def __eq__(self, other):
-        return self.parts == other.parts
+        return self.parts == other.parts and self.authorization == other.authorization
 
     def __hash__(self):
         return hash(self.parts)
@@ -248,9 +250,9 @@ class Cassette(object):
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        before_url = Url(request.url)
-        check_in_urls = {req:Url(req.url) for req in self.requests}
-        matching_request = [req for req, check_url in check_in_urls.items() if check_url == before_url and request.headers['Authorization'] == req.headers['Authorization']]
+        url_parts = Url(request)
+        check_in_urls = {req:Url(req) for req in self.requests}
+        matching_request = [req for req, check_request in check_in_urls.items() if check_request == url_parts]
         if request and matching_request and self.record_mode != 'all' and self.rewound:
             return matching_request[0]
         else:
