@@ -250,7 +250,7 @@ class Cassette(object):
         request = self._before_record_request(request)
         before_url = Url(request.url)
         check_in_urls = {req:Url(req.url) for req in self.requests}
-        matching_request = [req for req, check_url in check_in_urls.items() if check_url == before_url]
+        matching_request = [req for req, check_url in check_in_urls.items() if check_url == before_url and request.headers['Authorization'] == req.headers['Authorization']]
         if request and matching_request and self.record_mode != 'all' and self.rewound:
             return matching_request[0]
         else:
