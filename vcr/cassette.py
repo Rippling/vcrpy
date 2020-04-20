@@ -27,13 +27,13 @@ class Url(object):
         _path = unquote_plus(parts.path)
         parts = parts._replace(query=_query, path=_path)
         self.parts = parts
-        self.authorization = request.headers['Authorization'] if 'Authorization' in request.headers else None
+        self.headers = request.headers
 
     def __eq__(self, other):
-        return self.parts == other.parts and self.authorization == other.authorization
+        return self.parts == other.parts and self.headers == other.headers
 
     def __hash__(self):
-        return hash(self.parts)
+        return hash(self.parts) + hash(self.headers)
 
 class CassetteContextDecorator(object):
     """Context manager/decorator that handles installing the cassette and
