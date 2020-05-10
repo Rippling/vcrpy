@@ -15,26 +15,6 @@ from six.moves.urllib.parse import urlparse, parse_qsl, unquote_plus
 
 log = logging.getLogger(__name__)
 
-class Url(object):
-    '''A url object that can be compared with other url orbjects
-    without regard to the vagaries of encoding, escaping, and ordering
-    of parameters in query strings.'''
-
-    def __init__(self, request):
-        url = request.uri
-        parts = urlparse(url)
-        _query = frozenset(parse_qsl(parts.query))
-        _path = unquote_plus(parts.path)
-        parts = parts._replace(query=_query, path=_path)
-        self.parts = parts
-        self.headers = request.headers
-
-    def __eq__(self, other):
-        return self.parts == other.parts and self.headers == other.headers
-
-    def __hash__(self):
-        return hash(self.parts) + hash(self.headers)
-
 class CassetteContextDecorator(object):
     """Context manager/decorator that handles installing the cassette and
     removing cassettes.
@@ -250,18 +230,9 @@ class Cassette(object):
 
     def can_play_response_for(self, request):
         request = self._before_record_request(request)
-        if len(request.query) == 0:
-            return request if request in self and \
-                self.record_mode != 'all' and \
-                self.rewound else []
-        else:
-            url_parts = Url(request)
-            check_in_urls = {req:Url(req) for req in self.requests}
-            matching_request = [req for req, check_request in check_in_urls.items() if check_request == url_parts]
-            if request and matching_request and self.record_mode != 'all' and self.rewound:
-                return matching_request[0]
-            else:
-                return []
+        return request if request in self and \
+            self.record_mode != 'all' and \
+            self.rewound else []
 
     def play_response(self, request):
         """

@@ -212,14 +212,13 @@ class VCRConnection(object):
         '''Retrieve the response'''
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        old_request = self.cassette.can_play_response_for(self._vcr_request)
-        if old_request:
+        if self.cassette.can_play_response_for(self._vcr_request):
             log.info(
                 "Playing response for {0} from cassette".format(
                     self._vcr_request
                 )
             )
-            response = self.cassette.play_response(old_request)
+            response = self.cassette.play_response(self._vcr_request)
             return VCRHTTPResponse(response)
         else:
             if self.cassette.write_protected and self.cassette.filter_request(

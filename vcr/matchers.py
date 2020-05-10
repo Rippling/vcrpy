@@ -10,9 +10,10 @@ log = logging.getLogger(__name__)
 def method(r1, r2):
     return r1.method == r2.method
 
-
+# uri = host + path + stringified(query)
+# To make query order-independent, comparing only host and path here
 def uri(r1, r2):
-    return r1.uri == r2.uri
+    return host(r1, r2) and path(r1, r2)
 
 
 def host(r1, r2):
@@ -32,7 +33,7 @@ def path(r1, r2):
 
 
 def query(r1, r2):
-    return r1.query == r2.query
+    return frozenset(r1.query) == frozenset(r2.query)
 
 
 def raw_body(r1, r2):
@@ -102,7 +103,6 @@ def _log_matches(r1, r2, matches):
             "Requests {0} and {1} differ according to "
             "the following matchers: {2}".format(r1, r2, differences)
         )
-
 
 def requests_match(r1, r2, matchers):
     matches = [(m(r1, r2), m) for m in matchers]
