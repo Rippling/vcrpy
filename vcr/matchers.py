@@ -57,6 +57,8 @@ def _transform_json(body):
 def _transform_multipart_form_data(body):
     hardcoded_boundary = "--ad8bdc022fa24a86a8a45730c69df640"
     if body:
+        if isinstance(body, bytes):
+            body = body.decode()
         boundary = body.split("\r\n")[0]
         return body.replace(boundary, hardcoded_boundary)
     return body
