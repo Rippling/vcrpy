@@ -95,7 +95,9 @@ def body(r1, r2):
     return transformer(read_body(r1)) == transformer(read_body(r2))
 
 def _is_jwt_token(auth_token):
-    token_match = re.search(r'^(Bearer|token)\ [a-zA-Z0-9]{3,}\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+', auth_token)
+    # "ey" as prefix ensures that the first character is a `{`, which is found only in case
+    # of JWT tokens
+    token_match = re.search(r'^(Bearer|token)\ ey[a-zA-Z0-9]{3,}\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+', auth_token)
     return True if token_match else False
 
 def _check_authorization(headers):
