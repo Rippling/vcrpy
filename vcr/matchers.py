@@ -46,13 +46,21 @@ def _header_checker(value, header='Content-Type'):
         return value in headers.get(header, '').lower()
     return checker
 
+def _sort_dict_values(dict):
+    sorted_dict = dict.copy()
+    keys = list(dict.keys())
+    for key in keys:
+        values = dict[key]
+        if isinstance(values, list):
+            sorted_dict[key] = sorted(values)
+    return sorted_dict
 
 def _transform_json(body):
     # Request body is always a byte string, but json.loads() wants a text
     # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
     # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode('utf-8'))
+        return json.loads(body.decode('utf-8'), object_hook = lambda dict: _sort_dict_values(dict))
 
 
 def _transform_multipart_form_data(body):
