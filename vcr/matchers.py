@@ -2,7 +2,8 @@ import json
 from six.moves import urllib, xmlrpc_client
 from .util import read_body
 import logging
-
+import re
+from base64 import b64decode
 
 log = logging.getLogger(__name__)
 
@@ -93,9 +94,32 @@ def body(r1, r2):
         transformer = _identity
     return transformer(read_body(r1)) == transformer(read_body(r2))
 
+def _is_jwt_token(auth_token):
+    token_match = re.search(r'^(Bearer|token)\ [a-zA-Z0-9]{3,}\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+', auth_token)
+    return True if token_match else False
+
+def _check_authorization(headers):
+    auth_token = headers['Authorization']
+    if _is_jwt_token(auth_token):
+        payload = auth_token.split(".")[1]
+        payload += '=' * (-len(payload) % 4) # Ignore 'Incorrect padding' error when base64 decoding
+        payload_dict = json.loads(b64decode(payload))
+        return payload_dict
+    else:
+        return auth_token
+
+def _headers_without_authorization(headers):
+    new_headers = headers.copy()
+    new_headers.pop('Authorization')
+    return new_headers
 
 def headers(r1, r2):
-    return r1.headers == r2.headers
+    r1_headers = r1.headers
+    r2_headers = r2.headers
+    if 'Authorization' in list(r1_headers.keys()) and 'Authorization' in list(r2_headers.keys()):
+        return _headers_without_authorization(r1_headers) == _headers_without_authorization(r2_headers) and _check_authorization(r1_headers) == _check_authorization(r2_headers)
+    else:
+        return r1_headers == r2_headers
 
 
 def _log_matches(r1, r2, matches):
