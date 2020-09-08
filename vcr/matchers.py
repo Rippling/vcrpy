@@ -79,6 +79,7 @@ _checker_transformer_pairs = (
     (_header_checker('multipart/form-data'), _transform_multipart_form_data),
     (_header_checker('application/x-www-form-urlencoded'), urllib.parse.parse_qs),
     (_header_checker('application/json'), _transform_json),
+    (_header_checker('application/vnd.api+json'), _transform_json),
     (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
 )
 
