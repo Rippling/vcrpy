@@ -89,7 +89,7 @@ def _transform_xwwwform_urlencoded(body):
                 body_dict[k].remove(item)
                 body_dict[k].append(_transform_json(item))
         body_dict[k] = sorted(body_dict[k])
-    return json.dumps(body_dict, sort_keys=True)
+    return sorted(body_dict.items())
 
 
 _xml_header_checker = _header_checker('text/xml')
