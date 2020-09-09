@@ -73,11 +73,29 @@ def _transform_multipart_form_data(body):
     return body
 
 
+def _is_json(s):
+    try:
+        json.loads(s)
+        return True
+    except:
+        return False
+
+
+def _transform_xwwwform_urlencoded(body):
+    body_dict = urllib.parse.parse_qs(body)
+    for k, value_list in list(body_dict.items()):
+        for item in value_list.copy():
+            if _is_json(item):
+                body_dict[k].remove(item)
+                body_dict[k].append(_transform_json(item))
+    return sorted(body_dict)
+
+
 _xml_header_checker = _header_checker('text/xml')
 _xmlrpc_header_checker = _header_checker('xmlrpc', header='User-Agent')
 _checker_transformer_pairs = (
     (_header_checker('multipart/form-data'), _transform_multipart_form_data),
-    (_header_checker('application/x-www-form-urlencoded'), urllib.parse.parse_qs),
+    (_header_checker('application/x-www-form-urlencoded'), _transform_xwwwform_urlencoded),
     (_header_checker('application/json'), _transform_json),
     (_header_checker('application/vnd.api+json'), _transform_json),
     (lambda request: _xml_header_checker(request) and _xmlrpc_header_checker(request), xmlrpc_client.loads),
