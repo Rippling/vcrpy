@@ -84,11 +84,12 @@ def _is_json(s):
 def _transform_xwwwform_urlencoded(body):
     body_dict = urllib.parse.parse_qs(body)
     for k, value_list in list(body_dict.items()):
-        for item in value_list.copy():
+        for item in list(value_list):
             if _is_json(item):
                 body_dict[k].remove(item)
                 body_dict[k].append(_transform_json(item))
-    return sorted(body_dict)
+        body_dict[k] = sorted(body_dict[k])
+    return json.dumps(body_dict, sort_keys=True)
 
 
 _xml_header_checker = _header_checker('text/xml')
