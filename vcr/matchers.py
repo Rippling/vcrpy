@@ -53,7 +53,7 @@ def _sort_dict_values(dictionary):
     for key in keys:
         values = dictionary[key]
         if isinstance(values, list):
-            sorted_dict[key] = sorted([sorted(_sort_dict_values(v).items()) if isinstance(v, dict) else v for v in values])
+            sorted_dict[key] = sorted(str(sorted(_sort_dict_values(v).items())) if isinstance(v, dict) else str(v) for v in values)
     return sorted_dict
 
 
