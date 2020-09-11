@@ -53,7 +53,7 @@ def _sort_dict_values(dictionary):
     for key in keys:
         values = dictionary[key]
         if isinstance(values, list):
-            sorted_dict[key] = sorted([_sort_dict_values(v).items() if isinstance(v, dict) else v for v in values])
+            sorted_dict[key] = sorted([sorted(_sort_dict_values(v).items()) if isinstance(v, dict) else v for v in values])
     return sorted_dict
 
 
@@ -62,7 +62,7 @@ def _transform_json(body):
     # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
     # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode('utf-8'), object_hook = lambda dict: _sort_dict_values(dict))
+        return json.loads(body.decode('utf-8'), object_hook=lambda d: _sort_dict_values(d))
 
 
 def _transform_multipart_form_data(body):
