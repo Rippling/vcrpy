@@ -46,14 +46,16 @@ def _header_checker(value, header='Content-Type'):
         return value in headers.get(header, '').lower()
     return checker
 
-def _sort_dict_values(dict):
-    sorted_dict = dict.copy()
-    keys = list(dict.keys())
+
+def _sort_dict_values(dictionary):
+    sorted_dict = dictionary.copy()
+    keys = list(dictionary.keys())
     for key in keys:
-        values = dict[key]
+        values = dictionary[key]
         if isinstance(values, list):
-            sorted_dict[key] = sorted(values)
+            sorted_dict[key] = sorted([_sort_dict_values(v).items() if isinstance(v, dict) else v for v in values])
     return sorted_dict
+
 
 def _transform_json(body):
     # Request body is always a byte string, but json.loads() wants a text
@@ -112,6 +114,9 @@ def _get_transformer(request):
         if checker(request.headers):
             return transformer
     else:
+        if _is_json(read_body(request)):
+            # If request body looks like json, we assume it is json
+            return _transform_json
         return _identity
 
 
