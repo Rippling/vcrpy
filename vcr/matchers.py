@@ -1,4 +1,6 @@
 import json
+from collections import OrderedDict
+
 from six.moves import urllib, xmlrpc_client
 from .util import read_body
 import logging
@@ -47,13 +49,18 @@ def _header_checker(value, header='Content-Type'):
     return checker
 
 
-def _sort_dict_values(dictionary):
-    sorted_dict = dictionary.copy()
-    keys = list(dictionary.keys())
+def _sort_dict_keys_and_values(dictionary):
+    # most of our vcr cassettes were recorded in python2 where order of json is jumbled so we want to do an order-independent comparison
+    # in a request body, order doesn't matter in almost all cases, so this should be fine
+
+    sorted_dict = OrderedDict()
+    keys = sorted(dictionary.keys())
     for key in keys:
         values = dictionary[key]
         if isinstance(values, list):
-            sorted_dict[key] = sorted(str(sorted(_sort_dict_values(v).items())) if isinstance(v, dict) else str(v) for v in values)
+            sorted_dict[key] = sorted(str(sorted(_sort_dict_keys_and_values(v).items())) if isinstance(v, dict) else str(v) for v in values)
+        else:
+            sorted_dict[key] = dictionary[key]
     return sorted_dict
 
 
@@ -62,7 +69,7 @@ def _transform_json(body):
     # string. RFC 7159 says the default encoding is UTF-8 (although UTF-16
     # and UTF-32 are also allowed: hmmmmm).
     if body:
-        return json.loads(body.decode('utf-8'), object_hook=lambda d: _sort_dict_values(d))
+        return json.loads(body.decode('utf-8'), object_hook=_sort_dict_keys_and_values)
 
 
 def _transform_multipart_form_data(body):
